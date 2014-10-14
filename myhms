@@ -1,0 +1,49 @@
+Const
+  PCRE_CASELESS   = $00000001;
+  PCRE_DOTALL     = $00000004;
+  PCRE_SINGLELINE = PCRE_CASELESS + PCRE_DOTALL;
+  HttpFilePath = "http://www.photodom.com/daily_photos/";
+  LocalFilePath = "d:/photodom/";
+
+  procedure ProcessItem(const aItemDescr: string);
+  var
+    Item, ItemFolder: THMSScriptMediaItem;
+  var
+    i, j: Integer;
+    sItemDate, sItemID, sItemLink, sItemTitle, sItemThumbnail,sItemFile,
+    sMediaConfig, sVideoDuration, sVideoID, sVideoLink, sVideoType: string;
+
+  begin
+          sItemLink := ReplaceStr(aItemDescr,"thumb_","");
+          i := EndPos(sItemLink,'/');
+          j := Length(SItemLink);
+          sItemFile :=  Copy(sItemLink,i+1,j+1-i);
+          sItemFile := LocalFilePath + sItemFile;
+          i := EndPos(sItemFile,"jpg");
+          if i <> 0 then
+            if FileExists(sItemFile) then
+                sItemFile := ""
+            else
+                HmsDownloadURLToFile(sItemLink, sItemFile);
+  end;
+
+  procedure ProcessPage(const aWebPage: string);
+  var
+    ItemsRegExpr: TRegExpr;
+  begin
+    ItemsRegExpr := TRegExpr.Create('tmpsrc="(.*?)" src=', PCRE_SINGLELINE);
+    try
+      if ItemsRegExpr.Search(aWebPage) then repeat
+       ProcessItem(ItemsRegExpr.Match)
+      until not ItemsRegExpr.SearchAgain
+    finally
+      ItemsRegExpr.Free
+    end
+  end;
+
+var
+  sWebPage: string;
+begin
+  sWebPage := HMSDownloadURL(HttpFilePath);
+  ProcessPage(sWebPage);
+end.
